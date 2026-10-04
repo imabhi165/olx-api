@@ -27,3 +27,5 @@ go.work
 
 bin/
 build/
+*.postman
+postman/
