@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/imabhi165/olx-api/internal/config"
 )
 
 // healthzHandler handles GET /healthz requests.
@@ -28,20 +27,18 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 // blocks in ListenAndServe on :8090. If the server fails to start or
 // stops unexpectedly, the process exits with a fatal log entry.
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	cfg := config.MustLoad()
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthzHandler)
 
 	srv := http.Server{
-		Addr:         ":" + os.Getenv("PORT"),
+		Addr:         ":" + cfg.Port,
 		Handler:      mux,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 30,
 		IdleTimeout:  time.Second * 60,
 	}
+	log.Printf("Server is listening on %s", srv.Addr)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
