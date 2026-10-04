@@ -7,19 +7,8 @@ import (
 	"time"
 
 	"github.com/imabhi165/olx-api/internal/config"
+	"github.com/imabhi165/olx-api/internal/handlers"
 )
-
-// healthzHandler handles GET /healthz requests.
-// It sets the response content type to JSON, writes a 200 OK status,
-// and returns a small JSON payload indicating the service is healthy.
-// Method and path matching are enforced by the ServeMux pattern
-// "GET /healthz", so this handler is only invoked for that route.
-func healthzHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "appplication/json")
-	w.WriteHeader(http.StatusOK)
-
-	w.Write([]byte(`{"status": "OK"}`))
-}
 
 // main configures and starts the HTTP server.
 //
@@ -31,7 +20,7 @@ func main() {
 	cfg := config.MustLoad()
 	fmt.Println("Starting Olx server...")
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", healthzHandler)
+	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
 
 	srv := http.Server{
 		Addr:         ":" + cfg.Port,
