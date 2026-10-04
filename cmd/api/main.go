@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -28,6 +29,7 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 // stops unexpectedly, the process exits with a fatal log entry.
 func main() {
 	cfg := config.MustLoad()
+	fmt.Println("Starting Olx server...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthzHandler)
 
