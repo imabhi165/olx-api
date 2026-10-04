@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -31,7 +32,7 @@ func main() {
 	mux.HandleFunc("GET /healthz", healthzHandler)
 
 	srv := http.Server{
-		Addr:         ":8090",
+		Addr:         ":" + os.Getenv("PORT"),
 		Handler:      mux,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 30,
