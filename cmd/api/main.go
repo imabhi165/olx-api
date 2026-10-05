@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/imabhi165/olx-api/internal/config"
+	"github.com/imabhi165/olx-api/internal/db"
 	"github.com/imabhi165/olx-api/internal/handlers"
 )
 
@@ -18,6 +19,11 @@ import (
 // stops unexpectedly, the process exits with a fatal log entry.
 func main() {
 	cfg := config.MustLoad()
+	_, err := db.Connect(cfg.DatabaseUrl)
+	if err != nil {
+		log.Fatalf("main.db.connect: %v", err)
+	}
+	fmt.Println("Database Connected")
 	fmt.Println("Starting Olx server...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
