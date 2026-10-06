@@ -19,7 +19,7 @@ import (
 // stops unexpectedly, the process exits with a fatal log entry.
 func main() {
 	cfg := config.MustLoad()
-	_, err := db.Connect(cfg.DatabaseUrl)
+	db, err := db.Connect(cfg.DatabaseUrl)
 	if err != nil {
 		log.Fatalf("main.db.connect: %v", err)
 	}
@@ -27,6 +27,7 @@ func main() {
 	fmt.Println("Starting Olx server...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
+	mux.HandleFunc("GET /listings", handlers.ListingsHandler(db))
 
 	srv := http.Server{
 		Addr:         ":" + cfg.Port,
