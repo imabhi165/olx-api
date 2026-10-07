@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -20,8 +21,7 @@ type Listing struct {
 // wrap the handler to inject the database connection -> return a http.HandlerFunc and handle the request
 func ListingsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		//TODO: query the database and return the results as JSON
+		// TODO: query the database and return the results as JSON
 		rows, err := db.Query(
 			`SELECT id, title, description, price, city, created_at
 			FROM listings
@@ -34,7 +34,7 @@ func ListingsHandler(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		//TODO: iterate over the rows and return them as JSON
+		// TODO: iterate over the rows and return them as JSON
 		var listings []Listing
 		for rows.Next() {
 			var listing Listing
@@ -56,5 +56,23 @@ func ListingsHandler(db *sql.DB) http.HandlerFunc {
 		// set the status code to 200 OK
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(listings)
+	}
+}
+
+func DeleteListings(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// TODO: delete the listing from the database
+		listingID := r.PathValue("id")
+		fmt.Println("listingId:", listingID)
+		_, err := db.Exec(`DELETE FROM listings WHERE id = $1`, listingID)
+		if err != nil {
+			log.Printf("delete: %v", err)
+			http.Error(w, "Internal error", http.StatusInternalServerError)
+			return
+		}
+
+		// set the status code to 204 No Content
+		w.WriteHeader(http.StatusNoContent)
+
 	}
 }
