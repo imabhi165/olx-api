@@ -1,0 +1,30 @@
+#:schema https://json.schemastore.org/any.json
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # Point to your actual entry point
+  cmd = "go build -o ./tmp/main ./cmd/api/"
+  bin = "./tmp/main" # Air automatically adds .exe on Windows
+  include_ext = ["go", "tpl", "tmpl", "html"]
+
+  # Exclude directories that don't need to trigger a rebuild
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "postman", "docs", ".git", "migrations", "seeds"]
+  exclude_regex = ["_test.go"]
+
+  # Rebuild delay (500ms is snappy but avoids double-builds on quick saves)
+  delay = 500
+
+  # Critical for web servers: gracefully stop the old process before starting the new one
+  send_interrupt = true
+  kill_delay = "500ms"
+
+  # Don't try to run the old binary if the build fails
+  stop_on_error = true
+
+[log]
+  time = true # Useful for debugging in dev
+
+[misc]
+  clean_on_exit = true # Cleans up the tmp/ folder when you stop Air
