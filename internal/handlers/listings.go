@@ -3,7 +3,6 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -18,61 +17,71 @@ type Listing struct {
 	CreatedAt   time.Time
 }
 
-// wrap the handler to inject the database connection -> return a http.HandlerFunc and handle the request
-func ListingsHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: query the database and return the results as JSON
-		rows, err := db.Query(
-			`SELECT id, title, description, price, city, created_at
-			FROM listings
-			ORDER BY created_at DESC
-			LIMIT 100`)
-		if err != nil {
-			log.Printf("query: %v", err)
-			http.Error(w, "Internal error", http.StatusInternalServerError)
-			return
-		}
-		defer rows.Close()
+type ListingHandlers struct {
+	db *sql.DB
+}
 
-		// TODO: iterate over the rows and return them as JSON
-		var listings []Listing
-		for rows.Next() {
-			var listing Listing
-			if err := rows.Scan(&listing.ID, &listing.Title, &listing.Description, &listing.Price, &listing.City, &listing.CreatedAt); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			listings = append(listings, listing)
-		}
-		// check for errors from the rows iterator
-		if err := rows.Err(); err != nil {
-			log.Printf("rows: %v", err)
-			http.Error(w, "Internal error", http.StatusInternalServerError)
-			return
-		}
-		// TODO: convert the listings to JSON and write it to the response
-		// set the content type to application/json
-		w.Header().Set("Content-Type", "application/json")
-		// set the status code to 200 OK
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(listings)
+// NewListingHandlers creates a new ListingHandlers with the given database connection.
+func NewListingHandlers(db *sql.DB) *ListingHandlers {
+	return &ListingHandlers{
+		db: db,
 	}
 }
 
-func DeleteListings(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: delete the listing from the database
-		listingID := r.PathValue("id")
-		fmt.Println("listingId:", listingID)
-		_, err := db.Exec(`DELETE FROM listings WHERE id = $1`, listingID)
-		if err != nil {
-			log.Printf("delete: %v", err)
+// ListingsHandler handles GET /listings and returns up to 100 listings as JSON.
+
+func (lh *ListingHandlers) List(w http.ResponseWriter, r *http.Request) {
+	rows, err := lh.db.Query(
+		`SELECT id, title, description, price, city, created_at
+			FROM listings
+			ORDER BY created_at DESC
+			LIMIT 100`)
+	if err != nil {
+		log.Printf("query: %v", err)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var listings []Listing
+	for rows.Next() {
+		var listing Listing
+		if err := rows.Scan(&listing.ID, &listing.Title, &listing.Description, &listing.Price, &listing.City, &listing.CreatedAt); err != nil {
+			log.Printf("scan: %v", err)
 			http.Error(w, "Internal error", http.StatusInternalServerError)
 			return
 		}
-
-		// set the status code to 204 No Content
-		w.WriteHeader(http.StatusNoContent)
-
+		listings = append(listings, listing)
 	}
+	if err := rows.Err(); err != nil {
+		log.Printf("rows: %v", err)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(listings); err != nil {
+		log.Printf("encode: %v", err)
+	}
+}
+
+// DeleteListings handles DELETE /listings/{id} and removes the listing from the database.
+
+func (lh *ListingHandlers) Delete(w http.ResponseWriter, r *http.Request) {
+	listingID := r.PathValue("id")
+	if listingID == "" {
+		http.Error(w, "Missing listing ID", http.StatusBadRequest)
+		return
+	}
+	log.Printf("deleting listing ID: %s", listingID)
+
+	_, err := lh.db.Exec(`DELETE FROM listings WHERE id = $1`, listingID)
+	if err != nil {
+		log.Printf("delete: %v", err)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
