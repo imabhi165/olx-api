@@ -31,8 +31,10 @@ func NewListingHandlers(db *sql.DB) *ListingHandlers {
 // ListingsHandler handles GET /listings and returns up to 100 listings as JSON.
 
 func (lh *ListingHandlers) List(w http.ResponseWriter, r *http.Request) {
-	rows, err := lh.db.Query(
-		`SELECT id, title, description, price, city, created_at
+	//Request scope context
+	ctx := r.Context()
+	rows, err := lh.db.QueryContext(ctx,
+		`SELECT id, title, description, price, city, created_at, pg_sleep(20)
 			FROM listings
 			ORDER BY created_at DESC
 			LIMIT 100`)
@@ -75,8 +77,8 @@ func (lh *ListingHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("deleting listing ID: %s", listingID)
-
-	_, err := lh.db.Exec(`DELETE FROM listings WHERE id = $1`, listingID)
+	ctx := r.Context()
+	_, err := lh.db.ExecContext(ctx, `DELETE FROM listings WHERE id = $1`, listingID)
 	if err != nil {
 		log.Printf("delete: %v", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
