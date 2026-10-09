@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -31,10 +32,10 @@ func NewListingHandlers(db *sql.DB) *ListingHandlers {
 // ListingsHandler handles GET /listings and returns up to 100 listings as JSON.
 
 func (lh *ListingHandlers) List(w http.ResponseWriter, r *http.Request) {
-	//Request scope context
+	// Request scope context
 	ctx := r.Context()
 	rows, err := lh.db.QueryContext(ctx,
-		`SELECT id, title, description, price, city, created_at, pg_sleep(20)
+		`SELECT id, title, description, price, city, created_at
 			FROM listings
 			ORDER BY created_at DESC
 			LIMIT 100`)
@@ -78,12 +79,17 @@ func (lh *ListingHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("deleting listing ID: %s", listingID)
 	ctx := r.Context()
-	_, err := lh.db.ExecContext(ctx, `DELETE FROM listings WHERE id = $1`, listingID)
+	_, err := lh.db.ExecContext(ctx, `DELETE FROM listing WHERE id = $1`, listingID)
 	if err != nil {
-		log.Printf("delete: %v", err)
+		// log.Printf("delete: %v", err)
+		slog.Debug("Debug log:", "listing_id: ", listingID)
+		slog.Warn("Warnings log:", "listing_id: ", listingID)
+		slog.Error("Delete failed", "listings_id:", listingID, "err", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
+
+	slog.Info("Record deleted", "listing_id: ", listingID)
 
 	w.WriteHeader(http.StatusNoContent)
 }

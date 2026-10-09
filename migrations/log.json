@@ -1,0 +1,1 @@
+{"time":"2026-10-09T12:32:47.1549805+05:30","level":"ERROR","msg":"Delete failed","listings_id:":"b3f69d7b-264f-497f-9f34-a517f4632e62","err":"ERROR: relation \"listing\" does not exist (SQLSTATE 42P01)"}
