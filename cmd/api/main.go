@@ -36,7 +36,7 @@ func main() {
 	fmt.Println("Starting Olx server...")
 
 	//
-	lh := handlers.NewListingHandlers(db)
+	lh := handlers.NewListingHandlers(db, logger)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
